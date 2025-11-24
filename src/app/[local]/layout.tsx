@@ -2,7 +2,6 @@ import Header from "@/components/header";
 import Footer from "@/components/footer";
 import ReduxProvider from "@/providers/ReduxProvider";
 import { Directions, Languages } from "@/constants/enums";
-import { Roboto } from "next/font/google";
 import type { Metadata } from "next";
 import { Locale } from "@/i18n.config";
 
@@ -11,14 +10,8 @@ import NextAuthSessionProvider from "@/providers/NextAuthSessionProvider";
 import "./globals.css";
 
 export async function generateStaticParams() {
-  return [{ locale: Languages.ARABIC }, { locale: Languages.ENGLISH }];
+  return [{ local: Languages.ARABIC }, { local: Languages.ENGLISH }];
 }
-
-const roboto = Roboto({
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
-  preload: true,
-});
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -30,15 +23,15 @@ export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
-  params: Promise<{ locale: Locale }>;
+  params: Promise<{ local: string }>;
 }>) {
-  const locale = (await params).locale;
+  const locale = (await params).local as Locale;
   return (
     <html
       lang={locale}
       dir={locale === Languages.ARABIC ? Directions.RTL : Directions.LTR}
     >
-      <body className={roboto.className}>
+      <body>
         <NextAuthSessionProvider>
           <ReduxProvider>
             <Header />

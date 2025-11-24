@@ -7,6 +7,7 @@ import getTrans from "@/lib/translation";
 import { addProductSchema, updateProductSchema } from "@/validations/product";
 import { Extra, ExtraIngredients, ProductSizes, Size } from "@/generated/prisma";
 import { revalidatePath } from "next/cache";
+import { PutBlobResult } from "@vercel/blob";
 
 export const addProduct = async (
   args: {
@@ -170,27 +171,67 @@ export const updateProduct = async (
     };
   }
 };
+// const getImageUrl = async (imageFile: File) => {
+
+//   const formData = new FormData();
+//   formData.append("file", imageFile);
+//   formData.append("pathName", "product_images");
+
+//   try {
+//     const response = await fetch(
+//       `${process.env.NEXT_PUBLIC_BASE_URL}/api/upload`,
+//       {
+//         method: "POST",
+//         body: formData,
+//       }
+//     );
+//     console.log(response);
+//     const image = (await response.json()) as { url: string };
+//     return image.url;
+//   } catch (error) {
+//     console.error("Error uploading file to Cloudinary:", error);
+//   }
+// };
+
 const getImageUrl = async (imageFile: File) => {
-  const formData = new FormData();
-  formData.append("file", imageFile);
-  formData.append("pathName", "product_images");
+  // const formData = new FormData();
+  // formData.append("file", imageFile);
+  // formData.append("pathName", "profile_images");
 
-  try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_BASE_URL}/api/upload`,
-      {
-        method: "POST",
-        body: formData,
-      }
-    );
-    console.log(response);
-    const image = (await response.json()) as { url: string };
-    return image.url;
-  } catch (error) {
-    console.error("Error uploading file to Cloudinary:", error);
+  // try {
+  //   const response = await fetch(
+  //     `${process.env.NEXT_PUBLIC_BASE_URL}/api/upload`,
+  //     {
+  //       method: "POST",
+  //       body: formData,
+  //     }
+  //   );
+  //   const image = (await response.json()) as { url: string };
+  //   return image.url;
+  // } catch (error) {
+  //   console.error("Error uploading file to Cloudinary:", error);
+  // }
+
+  const base = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
+  const uploadUrl = `${base.replace(
+    /\/$/,
+    ""
+  )}/api/upload?filename=${encodeURIComponent(imageFile.name)}`;
+
+  const response = await fetch(uploadUrl, {
+    method: "POST",
+    body: imageFile,
+  });
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => null);
+    console.error("Upload failed", response.status, text);
+    throw new Error("Image upload failed");
   }
-};
 
+  const newBlob = (await response.json()) as PutBlobResult;
+  return newBlob.url;
+};
 export const deleteProduct = async (id: string) => {
   const locale = await getCurrentLocale();
   const translations = await getTrans(locale);

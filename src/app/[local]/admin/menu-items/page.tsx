@@ -14,9 +14,10 @@ import { UserRole } from "@/generated/prisma";
 async function MenuItemsPage({
   params,
 }: {
-  params: Promise<{ locale: Locale }>;
+  params: Promise<{ local: string }>;
 }) {
-  const locale = (await params).locale;
+  const { local: localeStr } = await params;
+  const locale = localeStr as Locale;
   const translations = await getTrans(locale);
   const session = await getServerSession(authOptions);
   const products = await getProducts();

@@ -8,8 +8,9 @@ import { authOptions } from "@/server/auth";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
-async function AdminPage({ params }: { params: Promise<{ locale: Locale }> }) {
-  const { locale } = await params;
+async function AdminPage({ params }: { params: Promise<{ local: string }> }) {
+  const { local: localeStr } = await params;
+  const locale = localeStr as Locale;
   const translations = await getTrans(locale);
   const session = await getServerSession(authOptions);
   if (!session) {

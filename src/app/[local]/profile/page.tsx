@@ -7,13 +7,10 @@ import { UserRole } from "@/generated/prisma";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
-async function ProfilePage({
-  params,
-}: {
-  params: Promise<{ locale: Locale }>;
-}) {
+async function ProfilePage({ params }: { params: Promise<{ local: string }> }) {
   const session = await getServerSession(authOptions);
-  const { locale } = await params;
+  const { local: localeStr } = await params;
+  const locale = localeStr as Locale;
   const translations = await getTrans(locale);
 
   if (!session) {

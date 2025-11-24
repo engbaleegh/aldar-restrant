@@ -6,8 +6,9 @@ import { getUsers } from "@/server/db/users";
 import { Edit } from "lucide-react";
 import DeleteUserButton from "./_components/DeleteUserButton";
 
-async function UsersPage({ params }: { params: Promise<{ locale: Locale }> }) {
-  const { locale } = await params;
+async function UsersPage({ params }: { params: Promise<{ local: string }> }) {
+  const { local: localeStr } = await params;
+  const locale = localeStr as Locale;
   const users = await getUsers();
   return (
     <main>

@@ -6,9 +6,9 @@ import Form from "./_components/Form";
 import getTrans from "@/lib/translation";
 import { getCurrentLocale } from "@/lib/getCurrentLocale";
 
-async function SignupPage({ params }: { params: Promise<{ locale: Locale }> }) {
+async function SignupPage({ params }: { params: Promise<{ local: string }> }) {
   // const { locale } = await params;
-    const locale = await getCurrentLocale();
+  const locale = await getCurrentLocale();
   const translations = await getTrans(locale);
   return (
     <main>

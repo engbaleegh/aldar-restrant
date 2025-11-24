@@ -28,6 +28,9 @@ export const login = async (
       },
     });
     if (!user) {
+      console.warn("[AUTH][login] user not found", {
+        email: result.data.email,
+      });
       return { message: translations.messages.userNotFound, status: 401 };
     }
     const hashedPassword = user.password;
@@ -36,6 +39,9 @@ export const login = async (
       hashedPassword
     );
     if (!isValidPassword) {
+      console.warn("[AUTH][login] incorrect password", {
+        email: result.data.email,
+      });
       return {
         message: translations.messages.incorrectPassword,
         status: 401,
@@ -49,7 +55,7 @@ export const login = async (
       message: translations.messages.loginSuccessful,
     };
   } catch (error) {
-    console.error(error);
+    console.error("[AUTH][login] unexpected error", error);
     return {
       status: 500,
       message: translations.messages.unexpectedError,

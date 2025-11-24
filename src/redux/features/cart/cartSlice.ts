@@ -15,10 +15,11 @@ export type CartItem = {
 type CartState = {
   items: CartItem[];
 };
-const initialCartItems = localStorage.getItem("cartItems");
 
+// Do NOT read localStorage at module load time — that runs on the server
+// and causes hydration mismatches. Initialize empty here and load on client.
 const initialState: CartState = {
-  items: initialCartItems ? JSON.parse(initialCartItems) : [],
+  items: [],
 };
 
 export const cartSlice = createSlice({
@@ -50,17 +51,19 @@ export const cartSlice = createSlice({
       }
     },
     removeItemFromCart: (state, action: PayloadAction<{ id: string }>) => {
-      state.items = state.items.filter(
-        (item) => item.id !== action.payload.id
-      );
+      state.items = state.items.filter((item) => item.id !== action.payload.id);
     },
     clearCart: (state) => {
       state.items = [];
     },
+    // Replace entire cart (used to hydrate from localStorage on client mount)
+    setCartItems: (state, action: PayloadAction<CartItem[]>) => {
+      state.items = action.payload || [];
+    },
   },
 });
 
-export const { addCartItem, removeCartItem, removeItemFromCart } =
+export const { addCartItem, removeCartItem, removeItemFromCart, setCartItems } =
   cartSlice.actions;
 
 export default cartSlice.reducer;

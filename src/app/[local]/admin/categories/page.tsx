@@ -7,9 +7,10 @@ import CategoryItem from "./_components/CategoryItem";
 async function CategoriesPage({
   params,
 }: {
-  params: Promise<{ locale: Locale }>;
+  params: Promise<{ local: string }>;
 }) {
-  const locale = (await params).locale;
+  const { local: localeStr } = await params;
+  const locale = localeStr as Locale;
   const categories = await getCategories();
   const translations = await getTrans(locale);
   // console.log(categories)

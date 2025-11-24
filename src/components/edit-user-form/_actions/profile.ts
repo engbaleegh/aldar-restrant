@@ -7,6 +7,8 @@ import { updateProfileSchema } from "@/validations/profile";
 import { UserRole } from "@/generated/prisma";
 import { revalidatePath } from "next/cache";
 
+type PutBlobResult = { url: string };
+
 export const updateProfile = async (
   isAdmin: boolean,
   prevState: unknown,
@@ -74,21 +76,41 @@ export const updateProfile = async (
 };
 
 const getImageUrl = async (imageFile: File) => {
-  const formData = new FormData();
-  formData.append("file", imageFile);
-  formData.append("pathName", "profile_images");
+  // const formData = new FormData();
+  // formData.append("file", imageFile);
+  // formData.append("pathName", "profile_images");
 
-  try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_BASE_URL}/api/upload`,
-      {
-        method: "POST",
-        body: formData,
-      }
-    );
-    const image = (await response.json()) as { url: string };
-    return image.url;
-  } catch (error) {
-    console.error("Error uploading file to Cloudinary:", error);
+  // try {
+  //   const response = await fetch(
+  //     `${process.env.NEXT_PUBLIC_BASE_URL}/api/upload`,
+  //     {
+  //       method: "POST",
+  //       body: formData,
+  //     }
+  //   );
+  //   const image = (await response.json()) as { url: string };
+  //   return image.url;
+  // } catch (error) {
+  //   console.error("Error uploading file to Cloudinary:", error);
+  // }
+
+  const base = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
+  const uploadUrl = `${base.replace(
+    /\/$/,
+    ""
+  )}/api/upload?filename=${encodeURIComponent(imageFile.name)}`;
+
+  const response = await fetch(uploadUrl, {
+    method: "POST",
+    body: imageFile,
+  });
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => null);
+    console.error("Upload failed", response.status, text);
+    throw new Error("Image upload failed");
   }
+
+  const newBlob = (await response.json()) as PutBlobResult;
+  return newBlob.url;
 };
