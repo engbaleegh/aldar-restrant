@@ -38,7 +38,8 @@ function Hero() {
         </div>
         <div className="relative hidden md:block">
           <Image
-            src="/assets/images/pizza.png"
+            src="https://qvppy4pwy43c2ub3.public.blob.vercel-storage.com/aldar1.jpg"
+            // src="/assets/images/pizza.png"
             alt="Pizza"
             fill
             className="object-contain"

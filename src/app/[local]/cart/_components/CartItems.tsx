@@ -14,10 +14,29 @@ function CartItems() {
   console.log(cart)
   const dispatch = useAppDispatch();
   const subTotal = getSubTotal(cart);
+  const total = subTotal + deliveryFee;
 
   useEffect(() => {
     localStorage.setItem('cartItems', JSON.stringify(cart));
   }, [cart]);
+
+async function handleCheckout() {
+  const res = await fetch("/api/checkout", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      cart,
+      subTotal,
+      deliveryFee,
+      totalPrice: total,
+    }),
+  });
+
+  const data = await res.json();
+
+  // فتح صفحة الدفع
+  window.location.href = data.url;
+}
 
   return (
     <div>
@@ -99,6 +118,10 @@ function CartItems() {
                 {formatCurrency(subTotal + deliveryFee)}
               </strong>
             </span>
+             {/* زر الدفع */}
+            <Button className="mt-6" onClick={handleCheckout}>
+              Pay Now
+            </Button>
           </div>
         </>
       ) : (

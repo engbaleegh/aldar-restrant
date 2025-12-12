@@ -66,7 +66,7 @@ function Navbar({
       <ul
         className={`fixed lg:static ${
           openMenu ? "left-0 z-50" : "-left-full"
-        } top-0 px-10 py-20 lg:p-0 bg-background lg:bg-transparent transition-all duration-200 h-full lg:h-auto flex-col lg:flex-row w-full lg:w-auto flex items-start lg:items-center gap-10`}
+        } top-0 px-10 py-20 lg:p-0 bg-gray-200 lg:bg-transparent transition-all duration-200 h-full lg:h-auto flex-col lg:flex-row w-full lg:w-auto flex items-start lg:items-center gap-10`}
       >
         <Button
           variant="secondary"
