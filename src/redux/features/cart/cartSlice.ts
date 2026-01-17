@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { Extra, Size } from "@/generated/prisma";
 import { RootState } from "@/redux/store";
@@ -18,7 +18,8 @@ type CartState = {
   items: CartItem[];
 };
 // const initialCartItems = localStorage.getItem("cartItems");
-const initialCartItems = typeof window !== "undefined" ? localStorage.getItem("cartItems") : null;
+const initialCartItems =
+  typeof window !== "undefined" ? localStorage.getItem("cartItems") : null;
 
 const initialState: CartState = {
   items: initialCartItems ? JSON.parse(initialCartItems) : [],
@@ -30,7 +31,7 @@ export const cartSlice = createSlice({
   reducers: {
     addCartItem: (state, action: PayloadAction<CartItem>) => {
       const existingItem = state.items.find(
-        (item) => item.id === action.payload.id
+        (item) => item.id === action.payload.id,
       );
       if (existingItem) {
         existingItem.quantity = (existingItem.quantity || 0) + 1;
@@ -47,7 +48,7 @@ export const cartSlice = createSlice({
       if (item) {
         if (item.quantity === 1) {
           state.items = state.items.filter(
-            (item) => item.id !== action.payload.id
+            (item) => item.id !== action.payload.id,
           );
         } else {
           item.quantity! -= 1;
@@ -64,17 +65,23 @@ export const cartSlice = createSlice({
       state.items = [];
       localStorage.removeItem("cartItems");
     },
+    setCartItems: (state, action: PayloadAction<CartItem[]>) => {
+      state.items = action.payload || [];
+    },
   },
 });
 
-export const { addCartItem, removeCartItem, removeItemFromCart, clearCart } =
-  cartSlice.actions;
+export const {
+  addCartItem,
+  removeCartItem,
+  removeItemFromCart,
+  clearCart,
+  setCartItems,
+} = cartSlice.actions;
 
 export default cartSlice.reducer;
 
 export const selectCartItems = (state: RootState) => state.cart.items;
-
-
 
 // 'use client';
 

@@ -2,13 +2,12 @@ import Stripe from "stripe";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/prisma";
 
-
 const stripeSecret = process.env.STRIPE_SECRET_KEY;
 if (!stripeSecret) {
   throw new Error("STRIPE_SECRET_KEY environment variable is not set");
 }
 const stripe = new Stripe(stripeSecret, {
-  apiVersion: '2025-11-17.clover', // استخدم أحدث إصدار من API
+  apiVersion: "2025-12-15.clover",
 });
 
 export async function POST(req: Request) {
@@ -26,9 +25,9 @@ export async function POST(req: Request) {
   const order = await db.order.create({
     data: {
       paid: true,
-      subTotal: subTotal || 10,      // تجريبي
-      deliveryFee: deliveryFee || 5,    // تجريبي
-      totalPrice: totalPrice || 15,    // تجريبي
+      subTotal: subTotal || 10, // تجريبي
+      deliveryFee: deliveryFee || 5, // تجريبي
+      totalPrice: totalPrice || 15, // تجريبي
       userEmail: session.customer_details?.email || "test@example.com",
       phone: "",
       streetAddress: "",

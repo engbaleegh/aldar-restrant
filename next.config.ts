@@ -20,8 +20,8 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "**" },
     ],
   },
+
+  productionBrowserSourceMaps: false,
 };
 
 export default nextConfig;
-
-

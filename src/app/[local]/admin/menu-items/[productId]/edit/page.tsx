@@ -6,10 +6,16 @@ import Form from "../../_components/Form";
 import { getCategories } from "@/server/db/categories";
 import getTrans from "@/lib/translation";
 
-export async function generateStaticParams() {
-  const products = await getProducts();
+export const dynamic = "force-dynamic";
 
-  return products.map((product) => ({ productId: product.id }));
+export async function generateStaticParams() {
+  try {
+    const products = await getProducts();
+    return products.map((product) => ({ productId: product.id }));
+  } catch (error) {
+    console.error("Error generating static params:", error);
+    return [];
+  }
 }
 async function EditProductPage({
   params,
