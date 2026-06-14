@@ -1,6 +1,4 @@
 import Menu from "@/components/menu";
-import { db } from "@/lib/prisma";
-
 import { getProductsByCategory } from "@/server/db/products";
 
 async function MenuPage() {

@@ -121,6 +121,9 @@ export type Translations = {
       menuItems: string;
       users: string;
       orders: string;
+      reservations: string;
+      coupons: string;
+      settings: string;
     };
     categories: {
       form: {

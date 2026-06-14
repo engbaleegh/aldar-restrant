@@ -7,35 +7,44 @@ import { removeItemFromCart, selectCartItems } from '@/redux/features/cart/cartS
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { Trash2 } from 'lucide-react';
 import Image from 'next/image';
-import { useEffect } from 'react';
+
+import { useLocale } from "@/hooks/useLocale";
+import { useState } from "react";
 
 function CartItems() {
   const cart = useAppSelector(selectCartItems);
-  console.log(cart)
   const dispatch = useAppDispatch();
+  const locale = useLocale();
   const subTotal = getSubTotal(cart);
   const total = subTotal + deliveryFee;
-
-  useEffect(() => {
-    localStorage.setItem('cartItems', JSON.stringify(cart));
-  }, [cart]);
+  const [checkingOut, setCheckingOut] = useState(false);
 
 async function handleCheckout() {
-  const res = await fetch("/api/checkout", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      cart,
-      subTotal,
-      deliveryFee,
-      totalPrice: total,
-    }),
-  });
+  setCheckingOut(true);
+  try {
+    const res = await fetch("/api/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        cart,
+        subTotal,
+        deliveryFee,
+        totalPrice: total,
+        locale,
+      }),
+    });
 
-  const data = await res.json();
-
-  // فتح صفحة الدفع
-  window.location.href = data.url;
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.error || "Checkout failed");
+      return;
+    }
+    if (data.url) {
+      window.location.href = data.url;
+    }
+  } finally {
+    setCheckingOut(false);
+  }
 }
 
   return (
@@ -118,9 +127,8 @@ async function handleCheckout() {
                 {formatCurrency(subTotal + deliveryFee)}
               </strong>
             </span>
-             {/* زر الدفع */}
-            <Button className="mt-6" onClick={handleCheckout}>
-              Pay Now
+            <Button className="mt-6" onClick={handleCheckout} disabled={checkingOut}>
+              {checkingOut ? "Processing..." : "Pay Now"}
             </Button>
           </div>
         </>

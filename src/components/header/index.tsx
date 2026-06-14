@@ -3,7 +3,8 @@ import Navbar from "./Navbar";
 import CartButton from "./cart-button";
 import { getCurrentLocale } from "@/lib/getCurrentLocale";
 import getTrans from "@/lib/translation";
-// import LanguageSwitcher from "./language-switcher";
+import ThemeToggle from "./theme-toggle";
+import LanguageSwitcher from "./language-switcher";
 import AuthButtons from "./auth-buttons";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/server/auth";
@@ -28,7 +29,8 @@ async function Header() {
               translations={translations}
               initialSession={initialSession}
             />
-            {/* <LanguageSwitcher /> */}
+            <LanguageSwitcher />
+            <ThemeToggle />
           </div>
 
           <CartButton />

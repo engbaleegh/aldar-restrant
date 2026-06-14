@@ -8,9 +8,15 @@ import {
   addCategorySchema,
   updateCategorySchema,
 } from "@/validations/category";
+import { requireAdmin } from "@/lib/auth-guard";
 import { revalidatePath } from "next/cache";
 
+async function ensureAdmin() {
+  await requireAdmin();
+}
+
 export const addCategory = async (prevState: unknown, formData: FormData) => {
+  await ensureAdmin();
   const locale = await getCurrentLocale();
   const translations = await getTrans(locale);
   const result = addCategorySchema(translations).safeParse(
@@ -48,6 +54,8 @@ export const updateCategory = async (
   prevState: unknown,
   formData: FormData
 ) => {
+  await ensureAdmin();
+
   const locale = await getCurrentLocale();
   const translations = await getTrans(locale);
   const result = updateCategorySchema(translations).safeParse(
@@ -87,6 +95,8 @@ export const updateCategory = async (
 };
 
 export const deleteCategory = async (id: string) => {
+  await ensureAdmin();
+
   const locale = await getCurrentLocale();
   const translations = await getTrans(locale);
 

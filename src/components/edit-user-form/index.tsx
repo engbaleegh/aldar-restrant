@@ -14,14 +14,16 @@ import { updateProfile } from "./_actions/profile";
 import Loader from "../ui/loader";
 import { CameraIcon } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { UserRole } from "@/generated/prisma";
+import { UserRole, User } from "@/generated/prisma";
+
+type ProfileUser = Omit<User, "password" | "updatedAt">;
 
 function EditUserForm({
   translations,
   user,
 }: {
   translations: Translations;
-  user: Session["user"];
+  user: ProfileUser | Session["user"];
 }) {
 
   const formData = new FormData();

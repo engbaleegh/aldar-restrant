@@ -166,7 +166,10 @@
       "categories": "Categories",
       "menuItems": "Menu Items",
       "users": "Users",
-      "orders": "Orders"
+      "orders": "Orders",
+      "reservations": "Reservations",
+      "coupons": "Coupons",
+      "settings": "Settings"
     },
     "categories": {
       "form": {

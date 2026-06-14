@@ -166,7 +166,10 @@
       "categories": "الفئات",
       "menuItems": "عناصر القائمة",
       "users": "المستخدمون",
-      "orders": "الطلبات"
+      "orders": "الطلبات",
+      "reservations": "الحجوزات",
+      "coupons": "الكوبونات",
+      "settings": "الإعدادات"
     },
     "categories": {
       "form": {

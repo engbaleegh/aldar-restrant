@@ -107,41 +107,21 @@ export const authOptions: NextAuthOptions = {
         let res;
         try {
           res = await login(credentials, locale);
-          console.error("[AUTH][authorize] login result", res);
         } catch (err) {
           console.error("[AUTH][authorize] login threw", err);
-          res = { status: 500, message: "Login error" } as any;
+          res = { status: 500, message: "Login error" } as { status: number; message: string };
         }
 
-        // Dev fallback: allow a local developer account when DB is unreachable
-        const isDev = process.env.NODE_ENV === "development";
-        const credEmail = credentials?.email;
-        const credPassword = credentials?.password;
-        if (res.status === 200 && res.user) {
+        if (res.status === 200 && "user" in res && res.user) {
           return res.user;
-        } else if (
-          isDev &&
-          credEmail === "dev@local" &&
-          credPassword === "devpass"
-        ) {
-          console.warn("[AUTH][authorize] using dev fallback user");
-          return {
-            id: "dev-user-id",
-            name: "Dev User",
-            email: "dev@local",
-            role: "ADMIN",
-          } as any;
-        } else {
-          console.error("[AUTH][authorize] throwing error for failed login", {
-            res,
-          });
-          throw new Error(
-            JSON.stringify({
-              validationError: res.error,
-              responseError: res.message,
-            })
-          );
         }
+
+        throw new Error(
+          JSON.stringify({
+            validationError: "error" in res ? res.error : undefined,
+            responseError: "message" in res ? res.message : undefined,
+          })
+        );
       },
     }),
   ],

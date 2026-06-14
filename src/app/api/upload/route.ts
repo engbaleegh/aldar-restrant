@@ -1,49 +1,30 @@
-// import cloudinary from "@/lib/cloudinary";
-// import { NextResponse } from "next/server";
-
-// // Define the type for the form data file
-// type FormDataFile = Blob & {
-//   name?: string; // Optional: Some browsers may add this
-// };
-
-// export async function POST(request: Request) {
-//   try {
-//     const formData = await request.formData();
-//     const file = formData.get("file") as FormDataFile | null;
-//     const pathName = formData.get("pathName") as string;
-
-//     if (!file) {
-//       return NextResponse.json({ error: "No file provided" }, { status: 400 });
-//     }
-//     // Convert the file to a format Cloudinary can handle (Buffer or Base64)
-//     const fileBuffer = await file.arrayBuffer();
-//     const base64File = Buffer.from(fileBuffer).toString("base64");
-//     // Upload to Cloudinary
-//     const uploadResponse = await cloudinary.uploader.upload(
-//       `data:${file.type};base64,${base64File}`,
-//       {
-//         folder: pathName,
-//         transformation: [
-//           { width: 200, height: 200, crop: "fill", gravity: "face" },
-//         ],
-//       }
-//     );
-//     return NextResponse.json({ url: uploadResponse.secure_url });
-//   } catch (error) {
-//     console.error("Error uploading file to Cloudinary:", error);
-//     return NextResponse.json(
-//       { error: "Failed to upload image" },
-//       { status: 500 }
-//     );
-//   }
-// }
-
 import { put } from "@vercel/blob";
 import { NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/server/auth";
+import { UserRole } from "@/generated/prisma";
+
+const ALLOWED_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+]);
+const MAX_SIZE = 5 * 1024 * 1024;
+
+function sanitizeFilename(filename: string): string {
+  const base = path.basename(filename).replace(/[^a-zA-Z0-9._-]/g, "_");
+  return base.slice(0, 100) || `upload-${Date.now()}`;
+}
 
 export async function POST(request: Request): Promise<NextResponse> {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { searchParams } = new URL(request.url);
   const filename = searchParams.get("filename");
 
@@ -54,23 +35,38 @@ export async function POST(request: Request): Promise<NextResponse> {
     );
   }
 
-  // read body as ArrayBuffer (works for binary body or streams)
+  const contentType = request.headers.get("content-type") || "";
+  if (!ALLOWED_TYPES.has(contentType)) {
+    return NextResponse.json(
+      { error: "Invalid file type. Allowed: JPEG, PNG, WebP, GIF" },
+      { status: 400 }
+    );
+  }
+
   const arrayBuffer = await request.arrayBuffer().catch(() => null);
-  if (!arrayBuffer) {
+  if (!arrayBuffer || arrayBuffer.byteLength === 0) {
     return NextResponse.json(
       { error: "Missing request body" },
       { status: 400 }
     );
   }
 
-  // If Vercel Blob token is configured, use @vercel/blob, otherwise fall back to saving locally (dev).
+  if (arrayBuffer.byteLength > MAX_SIZE) {
+    return NextResponse.json(
+      { error: "File too large. Maximum 5MB." },
+      { status: 400 }
+    );
+  }
+
+  const safeName = sanitizeFilename(filename);
   const token = process.env.BLOB_READ_WRITE_TOKEN;
+
   if (token) {
-    // Use the token-aware put; @vercel/blob will pick token from env if set, but put also accepts token option.
     try {
-      const blob = await put(filename, arrayBuffer, {
+      const blob = await put(safeName, arrayBuffer, {
         access: "public",
         token,
+        contentType,
       });
       return NextResponse.json(blob);
     } catch (err) {
@@ -82,28 +78,27 @@ export async function POST(request: Request): Promise<NextResponse> {
     }
   }
 
-  // Dev fallback: write file to public/uploads so it can be served by Next.js dev server
-  try {
-    const uploadsDir = path.join(process.cwd(), "public", "uploads");
-    await fs.mkdir(uploadsDir, { recursive: true });
-    const dest = path.join(uploadsDir, filename);
-    const buffer = Buffer.from(arrayBuffer);
-    await fs.writeFile(dest, buffer);
+  if (
+    process.env.NODE_ENV === "development" &&
+    session.user.role === UserRole.ADMIN
+  ) {
+    try {
+      const uploadsDir = path.join(process.cwd(), "public", "uploads");
+      await fs.mkdir(uploadsDir, { recursive: true });
+      const dest = path.join(uploadsDir, safeName);
+      await fs.writeFile(dest, Buffer.from(arrayBuffer));
 
-    const base = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
-    const url = `${base.replace(/\/$/, "")}/uploads/${encodeURIComponent(
-      filename
-    )}`;
-    return NextResponse.json({ url });
-  } catch (err) {
-    console.error("Local upload fallback failed:", err);
-    return NextResponse.json({ error: "Failed to save file" }, { status: 500 });
+      const base =
+        process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
+      const url = `${base.replace(/\/$/, "")}/uploads/${encodeURIComponent(safeName)}`;
+      return NextResponse.json({ url });
+    } catch (err) {
+      console.error("Local upload fallback failed:", err);
+    }
   }
-}
 
-// The next lines are required for Pages API Routes only
-// export const config = {
-//   api: {
-//     bodyParser: false,
-//   },
-// };
+  return NextResponse.json(
+    { error: "Upload storage not configured" },
+    { status: 503 }
+  );
+}

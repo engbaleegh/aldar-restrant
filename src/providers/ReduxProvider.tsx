@@ -19,11 +19,17 @@ function ClientHydrator({ children }: { children: React.ReactNode }) {
         }
       }
     } catch (err) {
-      // non-fatal; avoid breaking hydration
-      // eslint-disable-next-line no-console
       console.warn("Failed to load cart from localStorage", err);
     }
   }, [dispatch]);
+
+  useEffect(() => {
+    const unsubscribe = store.subscribe(() => {
+      const items = store.getState().cart.items;
+      localStorage.setItem("cartItems", JSON.stringify(items));
+    });
+    return unsubscribe;
+  }, []);
 
   return <>{children}</>;
 }

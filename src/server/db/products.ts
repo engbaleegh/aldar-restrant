@@ -3,33 +3,35 @@ import { db } from "@/lib/prisma";
 
 export const getProductsByCategory = cache(
   () => {
-    const products = db.category.findMany({
+    return db.category.findMany({
+      where: { isActive: true },
+      orderBy: { order: "asc" },
       include: {
         products: {
+          where: { isActive: true },
+          orderBy: { order: "asc" },
           include: {
             sizes: true,
             extras: true,
+            images: { orderBy: { order: "asc" } },
           },
         },
       },
     });
-    return products;
   },
   ["products-by-category"],
-  { revalidate: 1 }
+  { revalidate: 60, tags: ["products"] }
 );
+
 export const getBestSellers = cache(
-  (limit?: number | undefined) => {
-    const bestSellers = db.product.findMany({
+  (limit = 6) => {
+    return db.product.findMany({
       where: {
-        orders: {
-          some: {},
-        },
+        isActive: true,
+        orders: { some: {} },
       },
       orderBy: {
-        orders: {
-          _count: "desc",
-        },
+        orders: { _count: "desc" },
       },
       include: {
         sizes: true,
@@ -37,38 +39,82 @@ export const getBestSellers = cache(
       },
       take: limit,
     });
-    return bestSellers;
   },
   ["best-sellers"],
-  { revalidate: 1 }
+  { revalidate: 60, tags: ["products"] }
+);
+
+export const getFeaturedProducts = cache(
+  (limit = 8) => {
+    return db.product.findMany({
+      where: { isActive: true, isFeatured: true },
+      orderBy: { order: "asc" },
+      include: { sizes: true, extras: true },
+      take: limit,
+    });
+  },
+  ["featured-products"],
+  { revalidate: 60, tags: ["products"] }
+);
+
+export const getNewArrivals = cache(
+  (limit = 8) => {
+    return db.product.findMany({
+      where: { isActive: true, isNew: true },
+      orderBy: { createdAt: "desc" },
+      include: { sizes: true, extras: true },
+      take: limit,
+    });
+  },
+  ["new-arrivals"],
+  { revalidate: 60, tags: ["products"] }
 );
 
 export const getProducts = cache(
   () => {
-    const products = db.product.findMany({
-      orderBy: {
-        order: "asc",
-      },
+    return db.product.findMany({
+      where: { isActive: true },
+      orderBy: { order: "asc" },
+      include: { sizes: true, extras: true, Category: true },
     });
-    return products;
   },
   ["products"],
-  { revalidate: 3600 }
+  { revalidate: 60, tags: ["products"] }
 );
 
 export const getProduct = cache(
   (id: string) => {
-    const product = db.product.findUnique({
-      where: {
-        id,
-      },
+    return db.product.findUnique({
+      where: { id },
       include: {
         sizes: true,
         extras: true,
+        images: true,
+        Category: true,
+        reviews: {
+          where: { isApproved: true },
+          include: { user: { select: { name: true, image: true } } },
+          take: 10,
+        },
       },
     });
-    return product;
   },
-  [`product-${crypto.randomUUID()}`],
-  { revalidate: 1 }
+  ["product-detail"],
+  { revalidate: 60, tags: ["products"] }
 );
+
+export async function searchProducts(query: string, categoryId?: string) {
+  return db.product.findMany({
+    where: {
+      isActive: true,
+      ...(categoryId ? { categoryId } : {}),
+      OR: [
+        { name: { contains: query, mode: "insensitive" } },
+        { description: { contains: query, mode: "insensitive" } },
+        { nameAr: { contains: query, mode: "insensitive" } },
+      ],
+    },
+    include: { sizes: true, extras: true, Category: true },
+    orderBy: { order: "asc" },
+  });
+}

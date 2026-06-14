@@ -9,7 +9,7 @@ type i18nType = {
 
 export const i18n: i18nType = {
   defaultLocale: Languages.ENGLISH,
-  locales: [Languages.ENGLISH],
+  locales: [Languages.ENGLISH, Languages.ARABIC],
 };
 
 export type Locale = (typeof i18n)["locales"][number];

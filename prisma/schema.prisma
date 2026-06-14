@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../src/generated/prisma"
@@ -31,6 +25,12 @@ model User {
   orders        OrderProduct[]
   accounts      Account[]
   sessions      Session[]
+  addresses     Address[]
+  reviews       Review[]
+  favorites     Favorite[]
+  reservations  Reservation[]
+  notifications Notification[]
+  ordersOwned   Order[]        @relation("UserOrders")
 }
 
 model Session {
@@ -73,24 +73,60 @@ model Account {
   @@index([userId])
 }
 
-model Product {
-  id          String         @id @default(cuid())
+model Category {
+  id          String    @id @default(uuid())
   name        String
+  nameAr      String?
+  description String?
+  image       String?
+  order       Int       @default(autoincrement())
+  isActive    Boolean   @default(true)
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Product {
+  id          String         @id @default(uuid())
+  name        String
+  nameAr      String?
   description String
+  descriptionAr String?
   image       String
   order       Int            @default(autoincrement())
   basePrice   Float
+  isFeatured  Boolean        @default(false)
+  isNew       Boolean        @default(false)
+  isActive    Boolean        @default(true)
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
   sizes       Size[]
   extras      Extra[]
   orders      OrderProduct[]
+  images      ProductImage[]
+  reviews     Review[]
+  favorites   Favorite[]
   Category    Category       @relation(fields: [categoryId], references: [id])
   categoryId  String
+
+  @@index([categoryId])
+  @@index([isFeatured])
+  @@index([isNew])
+}
+
+model ProductImage {
+  id        String  @id @default(uuid())
+  url       String
+  alt       String?
+  order     Int     @default(0)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+
+  @@index([productId])
 }
 
 model Size {
-  id        String       @id @default(cuid())
+  id        String       @id @default(uuid())
   name      ProductSizes
   price     Float
   product   Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
@@ -98,25 +134,120 @@ model Size {
 }
 
 model Extra {
-  id        String           @id @default(cuid())
+  id        String           @id @default(uuid())
   name      ExtraIngredients
   price     Float
   product   Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
   productId String
 }
 
-model Category {
-  id       String    @id @default(uuid())
-  name     String
-  order    Int       @default(autoincrement())
-  products Product[]
+model Address {
+  id        String   @id @default(uuid())
+  label     String   @default("Home")
+  street    String
+  city      String
+  postalCode String
+  country   String
+  isDefault Boolean  @default(false)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Coupon {
+  id            String    @id @default(uuid())
+  code          String    @unique
+  description   String?
+  discountType  DiscountType @default(PERCENTAGE)
+  discountValue Float
+  minOrderValue Float     @default(0)
+  maxUses       Int?
+  usedCount     Int       @default(0)
+  isActive      Boolean   @default(true)
+  expiresAt     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  orders        Order[]
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  rating    Int
+  comment   String?
+  isApproved Boolean @default(false)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  productId String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([productId])
+  @@index([isApproved])
+}
+
+model Favorite {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+}
+
+model Reservation {
+  id          String            @id @default(uuid())
+  guestName   String
+  guestEmail  String
+  guestPhone  String
+  partySize   Int
+  date        DateTime
+  time        String
+  status      ReservationStatus @default(PENDING)
+  notes       String?
+  user        User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId      String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([date])
+  @@index([status])
+}
+
+model Setting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 model Order {
   id            String         @id @default(uuid())
   paid          Boolean        @default(false)
+  status        OrderStatus    @default(PENDING)
   subTotal      Float
   deliveryFee   Float
+  taxAmount     Float          @default(0)
+  discountAmount Float         @default(0)
   totalPrice    Float
   userEmail     String
   phone         String
@@ -124,21 +255,36 @@ model Order {
   postalCode    String
   city          String
   country       String
+  stripeSessionId String?      @unique
+  notes         String?
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   products      OrderProduct[]
+  user          User?          @relation("UserOrders", fields: [userId], references: [id], onDelete: SetNull)
+  userId        String?
+  coupon        Coupon?        @relation(fields: [couponId], references: [id], onDelete: SetNull)
+  couponId      String?
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model OrderProduct {
-  id       String @id @default(cuid())
-  quantity Int
+  id        String  @id @default(uuid())
+  quantity  Int
+  unitPrice Float
+  sizeName  String?
+  extras    String?
 
-  order     Order   @relation(fields: [orderId], references: [id])
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   orderId   String
   user      User?   @relation(fields: [userId], references: [id])
   userId    String?
   Product   Product @relation(fields: [productId], references: [id])
   productId String
+
+  @@index([orderId])
 }
 
 enum ProductSizes {
@@ -158,4 +304,26 @@ enum ExtraIngredients {
 enum UserRole {
   USER
   ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  READY
+  DELIVERED
+  CANCELLED
+}
+
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  SEATED
+  COMPLETED
+  CANCELLED
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED
 }

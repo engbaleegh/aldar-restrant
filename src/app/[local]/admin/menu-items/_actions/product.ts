@@ -6,8 +6,13 @@ import { db } from "@/lib/prisma";
 import getTrans from "@/lib/translation";
 import { addProductSchema, updateProductSchema } from "@/validations/product";
 import { Extra, ExtraIngredients, ProductSizes, Size } from "@/generated/prisma";
+import { requireAdmin } from "@/lib/auth-guard";
 import { revalidatePath } from "next/cache";
 import { PutBlobResult } from "@vercel/blob";
+
+async function ensureAdmin() {
+  await requireAdmin();
+}
 
 export const addProduct = async (
   args: {
@@ -17,6 +22,8 @@ export const addProduct = async (
   prevState: unknown,
   formData: FormData
 ) => {
+  await ensureAdmin();
+
   const locale = await getCurrentLocale();
   const translations = await getTrans(locale);
   const result = addProductSchema(translations).safeParse(
@@ -89,6 +96,8 @@ export const updateProduct = async (
   prevState: unknown,
   formData: FormData
 ) => {
+  await ensureAdmin();
+
   const locale = await getCurrentLocale();
   const translations = await getTrans(locale);
   const result = updateProductSchema(translations).safeParse(
@@ -233,6 +242,8 @@ const getImageUrl = async (imageFile: File) => {
   return newBlob.url;
 };
 export const deleteProduct = async (id: string) => {
+  await ensureAdmin();
+
   const locale = await getCurrentLocale();
   const translations = await getTrans(locale);
   try {

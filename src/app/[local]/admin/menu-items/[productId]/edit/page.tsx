@@ -1,6 +1,6 @@
 import { Pages, Routes } from "@/constants/enums";
 import { Locale } from "@/i18n.config";
-import { getProduct, getProducts } from "@/server/db/products";
+import { getProduct } from "@/server/db/products";
 import { redirect } from "next/navigation";
 import Form from "../../_components/Form";
 import { getCategories } from "@/server/db/categories";
@@ -8,15 +8,6 @@ import getTrans from "@/lib/translation";
 
 export const dynamic = "force-dynamic";
 
-export async function generateStaticParams() {
-  try {
-    const products = await getProducts();
-    return products.map((product) => ({ productId: product.id }));
-  } catch (error) {
-    console.error("Error generating static params:", error);
-    return [];
-  }
-}
 async function EditProductPage({
   params,
 }: {

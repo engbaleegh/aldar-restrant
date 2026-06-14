@@ -2,21 +2,18 @@ import EditUserForm from "@/components/edit-user-form";
 import { Pages, Routes } from "@/constants/enums";
 import { Locale } from "@/i18n.config";
 import getTrans from "@/lib/translation";
-import { getUser, getUsers } from "@/server/db/users";
+import { getUser } from "@/server/db/users";
 import { redirect } from "next/navigation";
 
-export async function generateStaticParams() {
-  const users = await getUsers();
-
-  return users.map((user) => ({ userId: user.id }));
-}
+export const dynamic = "force-dynamic";
 
 async function EditUserPage({
   params,
 }: {
-  params: Promise<{ userId: string; locale: Locale }>;
+  params: Promise<{ userId: string; local: string }>;
 }) {
-  const { locale, userId } = await params;
+  const { local: localeStr, userId } = await params;
+  const locale = localeStr as Locale;
   const translations = await getTrans(locale);
   const user = await getUser(userId);
   if (!user) {

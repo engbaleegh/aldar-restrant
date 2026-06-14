@@ -4,54 +4,55 @@ import Link from "@/components/link";
 import { buttonVariants } from "@/components/ui/button";
 import { Pages, Routes } from "@/constants/enums";
 import { Translations } from "@/types/translations";
-import { useParams, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
+import { useLocale, localizedPath } from "@/hooks/useLocale";
+
+const ADMIN_TABS = [
+  { titleKey: "profile" as const, href: Routes.ADMIN },
+  {
+    titleKey: "categories" as const,
+    href: `${Routes.ADMIN}/${Pages.CATEGORIES}`,
+  },
+  {
+    titleKey: "menuItems" as const,
+    href: `${Routes.ADMIN}/${Pages.MENU_ITEMS}`,
+  },
+  { titleKey: "users" as const, href: `${Routes.ADMIN}/${Pages.USERS}` },
+  { titleKey: "orders" as const, href: `${Routes.ADMIN}/${Pages.ORDERS}` },
+  {
+    titleKey: "reservations" as const,
+    href: `${Routes.ADMIN}/reservations`,
+  },
+  { titleKey: "coupons" as const, href: `${Routes.ADMIN}/coupons` },
+  { titleKey: "settings" as const, href: `${Routes.ADMIN}/settings` },
+];
 
 function AdminTabs({ translations }: { translations: Translations }) {
   const pathname = usePathname();
-  const { locale } = useParams();
+  const locale = useLocale();
 
-  const tabs = [
-    {
-      id: crypto.randomUUID(),
-      title: translations.admin.tabs.profile,
-      href: Routes.ADMIN,
-    },
-    {
-      id: crypto.randomUUID(),
-      title: translations.admin.tabs.categories,
-      href: `${Routes.ADMIN}/${Pages.CATEGORIES}`,
-    },
-    {
-      id: crypto.randomUUID(),
-      title: translations.admin.tabs.menuItems,
-      href: `${Routes.ADMIN}/${Pages.MENU_ITEMS}`,
-    },
-    {
-      id: crypto.randomUUID(),
-      title: translations.admin.tabs.users,
-      href: `${Routes.ADMIN}/${Pages.USERS}`,
-    },
-    {
-      id: crypto.randomUUID(),
-      title: translations.admin.tabs.orders,
-      href: `${Routes.ADMIN}/${Pages.ORDERS}`,
-    },
-  ];
-  const isActiveTab = (href: string) => {
-    const hrefArray = href.split("/");
-    return hrefArray.length > 1
-      ? pathname.startsWith(`/${href}`)
-      : pathname === `/${href}`;
+  const tabs = ADMIN_TABS.map((tab) => ({
+    ...tab,
+    title: translations.admin.tabs[tab.titleKey] ?? tab.titleKey,
+    fullHref: localizedPath(locale, tab.href),
+  }));
+
+  const isActiveTab = (fullHref: string, href: string) => {
+    if (href === Routes.ADMIN) {
+      return pathname === fullHref;
+    }
+    return pathname.startsWith(fullHref);
   };
+
   return (
-    <nav className="mt-20">
+    <nav className="mt-20" aria-label="Admin navigation">
       <ul className="flex items-center flex-wrap gap-4 justify-center">
         {tabs.map((tab) => (
-          <li key={tab.id}>
+          <li key={tab.href}>
             <Link
-              href={`/${tab.href}`}
+              href={tab.fullHref}
               className={`hover:!bg-orange-600 ${
-                isActiveTab(tab.href)
+                isActiveTab(tab.fullHref, tab.href)
                   ? buttonVariants({ variant: "default" })
                   : buttonVariants({ variant: "outline" })
               }`}
