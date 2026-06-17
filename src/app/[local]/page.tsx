@@ -8,10 +8,13 @@ import FAQSection from "./_components/FAQSection";
 import CTASection from "./_components/CTASection";
 import FeaturedProducts from "./_components/FeaturedProducts";
 
+import SpecialOffers from "./_components/SpecialOffers";
+
 export default function Home() {
   return (
     <main>
       <Hero />
+      <SpecialOffers />
       <FeaturedProducts />
       <CategoriesSection />
       <BestSellers />

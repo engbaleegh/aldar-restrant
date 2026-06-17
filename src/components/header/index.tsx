@@ -13,26 +13,37 @@ async function Header() {
   const locale = await getCurrentLocale();
   const initialSession = await getServerSession(authOptions);
   const translations = await getTrans(locale);
+
   return (
-    <header className="py-4 md:py-6">
-      <div className="container flex items-center justify-between gap-6 lg:gap-10 shadow-md py-2">
+    <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-950/80 backdrop-blur-lg border-b border-border/50">
+      <div className="container flex items-center justify-between gap-4 py-3 md:py-4">
         <Link
           href={`/${locale}`}
-          className="text-primary font-semibold text-2xl"
+          className="flex items-center gap-2 group"
         >
-          ALDAR
+          <span className="text-2xl">🍽️</span>
+          <span className="text-primary font-bold text-xl md:text-2xl tracking-tight group-hover:opacity-80 transition-opacity">
+            ALDAR
+          </span>
         </Link>
+
         <Navbar translations={translations} initialSession={initialSession} />
-        <div className="flex items-center gap-6 flex-1 justify-end">
-          <div className="hidden lg:flex lg:items-center lg:gap-6 ">
+
+        <div className="flex items-center gap-3 md:gap-4">
+          <Link
+            href={`/${locale}/reservations`}
+            className="hidden md:inline-flex text-sm font-semibold text-muted-foreground hover:text-primary transition-colors"
+          >
+            Reserve
+          </Link>
+          <div className="hidden lg:flex lg:items-center lg:gap-3">
+            <LanguageSwitcher />
+            <ThemeToggle />
             <AuthButtons
               translations={translations}
               initialSession={initialSession}
             />
-            <LanguageSwitcher />
-            <ThemeToggle />
           </div>
-
           <CartButton />
         </div>
       </div>
@@ -41,27 +52,3 @@ async function Header() {
 }
 
 export default Header;
-
-// import { Routes } from "@/constants/enums";
-// import Link from "../link"
-// import Navbar from "./Navbar";
-// import CartButton from "./cart-button";
-// async function Header() {
-
-//   return (
-//     <header className="py-4 md:py-6">
-//       <div className="container flex items-center justify-between gap-6 lg:gap-10">
-//         <Link
-//           href={Routes.ROOT}
-//           className="text-primary font-semibold text-2xl"
-//         >
-//           🍕 Pizza
-//         </Link>
-//         <Navbar />
-//         <CartButton />
-//       </div>
-//     </header>
-//   );
-// }
-
-// export default Header;

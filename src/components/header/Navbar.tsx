@@ -16,6 +16,7 @@ import { UserRole } from "@/generated/prisma";
 import { useLocale, localizedPath } from "@/hooks/useLocale";
 
 const NAV_LINKS = [
+  { titleKey: "home" as const, href: "" },
   { titleKey: "menu" as const, href: Routes.MENU },
   { titleKey: "about" as const, href: Routes.ABOUT },
   { titleKey: "contact" as const, href: Routes.CONTACT },
@@ -36,7 +37,7 @@ function Navbar({
   const links = NAV_LINKS.map((link) => ({
     ...link,
     title: translations.navbar[link.titleKey],
-    href: localizedPath(locale, link.href),
+    href: link.href ? localizedPath(locale, link.href) : `/${locale}`,
   }));
 
   const isAdmin = session.data?.user.role === UserRole.ADMIN;
