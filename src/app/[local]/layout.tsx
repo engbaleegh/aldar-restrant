@@ -23,7 +23,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { local } = await params;
   const isAr = local === Languages.ARABIC;
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "https://aldar-restaurant.vercel.app";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "https://aldar-restrant.vercel.app";
 
   return {
     title: {

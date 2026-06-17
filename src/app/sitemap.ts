@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { i18n } from "@/i18n.config";
 
-const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "https://aldar-restaurant.vercel.app";
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "https://aldar-restrant.vercel.app";
 
 const routes = ["", "menu", "about", "contact", "cart", "reservations", "auth/signin", "auth/signup"];
 
