@@ -30,7 +30,8 @@ function AddToCartButton({ item }: { item: ProductWithRelations }) {
 
   const defaultSize =
     cart.find((element) => element.id === item.id)?.size ||
-    item.sizes.find((size) => size.name === ProductSizes.SMALL);
+    item.sizes.find((size) => size.name === ProductSizes.SMALL) ||
+    item.sizes[0];
   const defaultExtras =
     cart.find((element) => element.id === item.id)?.extras || [];
 

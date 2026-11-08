@@ -1,63 +1,47 @@
 "use client";
 
-export const dynamic = "force-dynamic";
-
-// هذا لاستعمال useEffect و Hooks
-import { useEffect, useState, Suspense } from "react";
-
-// redux hooks لحذف السلة
+import { useEffect, useRef, useState, Suspense } from "react";
 import { useAppDispatch } from "@/redux/hooks";
 import { clearCart } from "@/redux/features/cart/cartSlice";
-
-// للتحقق من session_id من الرابط
 import { useSearchParams } from "next/navigation";
-
-// لعرض رسالة نجاح
 import Link from "next/link";
 
 function SuccessPageContent() {
   const dispatch = useAppDispatch();
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session_id");
+  const requested = useRef(false);
 
   const [status, setStatus] = useState<"loading" | "done" | "error">("loading");
 
   useEffect(() => {
-    // إذا لا يوجد session ID لا ننشئ طلب
     if (!sessionId) {
-      console.log("Error: session_id is missing");
       setStatus("error");
       return;
     }
+    // Avoid confirming twice (React Strict Mode runs effects twice in dev).
+    if (requested.current) return;
+    requested.current = true;
 
-    const createOrder = async () => {
+    const confirmOrder = async () => {
       try {
-        // استدعاء API لإنشاء الطلب
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/api/create-order`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ sessionId }),
-          },
-        );
+        // Relative URL: works on any domain without depending on NEXT_PUBLIC_BASE_URL.
+        const response = await fetch("/api/create-order", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId }),
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-        if (!response.ok) throw new Error("Failed to create order");
-
-        // عند النجاح نحذف السلة
         dispatch(clearCart());
-        localStorage.removeItem("cartItems");
-
         setStatus("done");
       } catch (error) {
-        console.error("Error creating order:", error);
+        console.error("Error confirming order:", error);
         setStatus("error");
       }
     };
 
-    createOrder();
+    confirmOrder();
   }, [sessionId, dispatch]);
 
   return (
@@ -81,7 +65,7 @@ function SuccessPageContent() {
           <h1 className="text-2xl font-bold text-red-600">
             Something went wrong
           </h1>
-          <p>We could not process your order.</p>
+          <p>We could not confirm your order. If you were charged, please contact us.</p>
           <Link href="/" className="underline mt-4">
             Back to Home
           </Link>

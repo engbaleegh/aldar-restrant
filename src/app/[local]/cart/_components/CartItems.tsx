@@ -1,51 +1,17 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { deliveryFee, getSubTotal } from '@/lib/cart';
+import { deliveryFee, getItemUnitPrice, getSubTotal } from '@/lib/cart';
 import { formatCurrency } from '@/lib/formatters';
 import { removeItemFromCart, selectCartItems } from '@/redux/features/cart/cartSlice';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { Trash2 } from 'lucide-react';
 import Image from 'next/image';
 
-import { useLocale } from "@/hooks/useLocale";
-import { useState } from "react";
-
 function CartItems() {
   const cart = useAppSelector(selectCartItems);
   const dispatch = useAppDispatch();
-  const locale = useLocale();
   const subTotal = getSubTotal(cart);
-  const total = subTotal + deliveryFee;
-  const [checkingOut, setCheckingOut] = useState(false);
-
-async function handleCheckout() {
-  setCheckingOut(true);
-  try {
-    const res = await fetch("/api/checkout", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        cart,
-        subTotal,
-        deliveryFee,
-        totalPrice: total,
-        locale,
-      }),
-    });
-
-    const data = await res.json();
-    if (!res.ok) {
-      alert(data.error || "Checkout failed");
-      return;
-    }
-    if (data.url) {
-      window.location.href = data.url;
-    }
-  } finally {
-    setCheckingOut(false);
-  }
-}
 
   return (
     <div>
@@ -53,7 +19,7 @@ async function handleCheckout() {
         <>
           <ul>
             {cart.map((item) => (
-              <li key={item.id}>
+              <li key={item.cartKey ?? item.id}>
                 <div className='flex flex-col md:flex-row gap-6 justify-between'>
                   <div className='flex items-center gap-2'>
                     <div className='relative w-24 h-24'>
@@ -94,11 +60,11 @@ async function handleCheckout() {
                   </div>
                   <div className='flex-1 flex items-center gap-4 justify-end'>
                     <strong className='text-black '>
-                      {formatCurrency(item.basePrice)}
+                      {formatCurrency(getItemUnitPrice(item) * (item.quantity ?? 1))}
                     </strong>
                     <Button
                       onClick={() =>
-                        dispatch(removeItemFromCart({ id: item.id }))
+                        dispatch(removeItemFromCart({ id: item.cartKey ?? item.id }))
                       }
                       variant='secondary'
                       className='border'
@@ -127,9 +93,6 @@ async function handleCheckout() {
                 {formatCurrency(subTotal + deliveryFee)}
               </strong>
             </span>
-            <Button className="mt-6" onClick={handleCheckout} disabled={checkingOut}>
-              {checkingOut ? "Processing..." : "Pay Now"}
-            </Button>
           </div>
         </>
       ) : (

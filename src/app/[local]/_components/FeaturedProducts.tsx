@@ -1,6 +1,6 @@
 import Menu from "@/components/menu";
 import { DEMO_PRODUCTS } from "@/constants/demo-data";
-import { getFeaturedProducts } from "@/server/db/products";
+import { getFeaturedProducts, getProducts } from "@/server/db/products";
 import Link from "@/components/link";
 import { getCurrentLocale } from "@/lib/getCurrentLocale";
 import type { Product, Size, Extra } from "@/generated/prisma";
@@ -12,7 +12,10 @@ export default async function FeaturedProducts() {
   let products: MenuProduct[] = DEMO_PRODUCTS.slice(0, 4) as unknown as MenuProduct[];
 
   try {
-    const dbProducts = await getFeaturedProducts(4);
+    let dbProducts: MenuProduct[] = await getFeaturedProducts(4);
+    // No product marked as featured yet: show real products rather than demo
+    // ones, because demo products cannot be purchased.
+    if (dbProducts.length === 0) dbProducts = (await getProducts()).slice(0, 4);
     if (dbProducts.length > 0) products = dbProducts;
   } catch {
     // use demo data

@@ -1,7 +1,7 @@
 import MainHeading from "@/components/main-heading";
 import Menu from "@/components/menu";
 import { DEMO_PRODUCTS } from "@/constants/demo-data";
-import { getBestSellers } from "@/server/db/products";
+import { getBestSellers, getProducts } from "@/server/db/products";
 import type { Product, Size, Extra } from "@/generated/prisma";
 
 type MenuProduct = Product & { sizes: Size[]; extras: Extra[] };
@@ -10,7 +10,10 @@ async function BestSellers() {
   let bestSellers: MenuProduct[] = DEMO_PRODUCTS as unknown as MenuProduct[];
 
   try {
-    const dbProducts = await getBestSellers(3);
+    let dbProducts: MenuProduct[] = await getBestSellers(3);
+    // No orders yet: show real products rather than demo ones (demo products
+    // cannot be purchased).
+    if (dbProducts.length === 0) dbProducts = (await getProducts()).slice(0, 3);
     if (dbProducts.length > 0) bestSellers = dbProducts;
   } catch {
     // use demo data
