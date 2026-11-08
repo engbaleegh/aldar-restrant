@@ -1,6 +1,8 @@
+import { Languages } from "@/constants/enums";
 import { OrderStatus } from "@/generated/prisma";
 import { db } from "@/lib/prisma";
 import { getStripe, isStripeConfigured } from "@/lib/stripe";
+import { sendOrderConfirmationEmail } from "@/server/order-confirmation-email";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -45,8 +47,10 @@ export async function POST(req: Request) {
     }
 
     const details = session.customer_details;
-    await db.order.update({
-      where: { id: order.id },
+    // Only the request that actually flips paid=false → true continues, so the
+    // confirmation email is sent once even if this endpoint is called twice.
+    const { count } = await db.order.updateMany({
+      where: { id: order.id, paid: false },
       data: {
         paid: true,
         status: OrderStatus.CONFIRMED,
@@ -54,8 +58,20 @@ export async function POST(req: Request) {
         phone: order.phone || details?.phone || "",
       },
     });
+    if (count === 0) {
+      return NextResponse.json({ orderId: order.id, alreadyConfirmed: true });
+    }
 
-    return NextResponse.json({ orderId: order.id });
+    // The address the customer typed on the Stripe payment page.
+    const customerEmail = details?.email || order.userEmail;
+    const locale = Object.values(Languages).includes(session.metadata?.locale as Languages)
+      ? (session.metadata!.locale as Languages)
+      : Languages.ENGLISH;
+    const email = customerEmail
+      ? await sendOrderConfirmationEmail(order.id, customerEmail, locale)
+      : "skipped";
+
+    return NextResponse.json({ orderId: order.id, email });
   } catch (error) {
     console.error("[api/create-order] failed to confirm order", error);
     return NextResponse.json(

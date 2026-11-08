@@ -121,7 +121,8 @@ export async function POST(req: Request) {
       payment_method_types: ["card"],
       line_items: lineItems,
       customer_email: user?.email || undefined,
-      metadata: user ? { userId: user.id } : undefined,
+      // locale: language of the confirmation email sent after payment.
+      metadata: user ? { locale, userId: user.id } : { locale },
       success_url: `${baseUrl}/${locale}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/${locale}/cancel`,
     });
