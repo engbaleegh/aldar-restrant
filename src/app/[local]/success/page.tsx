@@ -5,9 +5,11 @@ import { useAppDispatch } from "@/redux/hooks";
 import { clearCart } from "@/redux/features/cart/cartSlice";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { useLocale } from "@/hooks/useLocale";
 
 function SuccessPageContent() {
   const dispatch = useAppDispatch();
+  const locale = useLocale();
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session_id");
   const requested = useRef(false);
@@ -81,7 +83,7 @@ function SuccessPageContent() {
               View the confirmation email (test inbox)
             </a>
           )}
-          <Link href="/" className="mt-4 underline">
+          <Link href={`/${locale}`} className="mt-4 underline">
             Back to Home
           </Link>
         </>
@@ -92,7 +94,7 @@ function SuccessPageContent() {
             Something went wrong
           </h1>
           <p>We could not confirm your order. If you were charged, please contact us.</p>
-          <Link href="/" className="underline mt-4">
+          <Link href={`/${locale}`} className="underline mt-4">
             Back to Home
           </Link>
         </>

@@ -1,29 +1,10 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { match as matchLocale } from "@formatjs/intl-localematcher";
-import Negotiator from "negotiator";
-import { i18n, LanguageType, Locale } from "./i18n.config";
+import { i18n, Locale } from "./i18n.config";
 import { withAuth } from "next-auth/middleware";
 import { getToken } from "next-auth/jwt";
 import { Pages, Routes } from "./constants/enums";
 import { UserRole } from "@/generated/prisma";
-
-function getLocale(request: NextRequest): string | undefined {
-  const negotiatorHeaders: Record<string, string> = {};
-  request.headers.forEach((value, key) => (negotiatorHeaders[key] = value));
-
-  const locales: LanguageType[] = i18n.locales;
-  const languages = new Negotiator({ headers: negotiatorHeaders }).languages();
-  let locale = "";
-
-  try {
-    locale = matchLocale(languages, locales, i18n.defaultLocale);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
-  } catch (error: any) {
-    locale = i18n.defaultLocale;
-  }
-  return locale;
-}
 
 export default withAuth(
   async function middleware(request: NextRequest) {
@@ -41,12 +22,14 @@ export default withAuth(
     const pathnameIsMissingLocale = i18n.locales.every(
       (locale) => !pathname.startsWith(`/${locale}`)
     );
-    // Redirect if there is no locale
+    // No locale in the URL: always open the default (English) version,
+    // whatever the browser language is. Visitors switch to Arabic with the
+    // language switcher in the header.
     if (pathnameIsMissingLocale) {
-      const locale = getLocale(request);
-      return NextResponse.redirect(
-        new URL(`/${locale}${pathname}`, request.url)
-      );
+      const url = request.nextUrl.clone();
+      url.pathname =
+        pathname === "/" ? `/${i18n.defaultLocale}` : `/${i18n.defaultLocale}${pathname}`;
+      return NextResponse.redirect(url);
     }
     const currentLocale = request.url.split("/")[3] as Locale;
     const isAuth = await getToken({ req: request });
