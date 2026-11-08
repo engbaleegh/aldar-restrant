@@ -43,9 +43,16 @@ export type EmailMessage = {
   text: string;
 };
 
+/**
+ * Sends the email. `previewUrl` is set only when using Ethereal
+ * (smtp.ethereal.email), a fake SMTP service for testing: messages are not
+ * delivered to real inboxes but can be viewed at that URL.
+ */
 export async function sendEmail(message: EmailMessage) {
   const from =
     process.env.EMAIL_FROM?.trim() ||
     `"Aldar Restaurant" <${process.env.SMTP_USER}>`;
-  return getTransporter().sendMail({ from, ...message });
+  const info = await getTransporter().sendMail({ from, ...message });
+  const previewUrl = nodemailer.getTestMessageUrl(info) || undefined;
+  return { messageId: info.messageId, previewUrl };
 }

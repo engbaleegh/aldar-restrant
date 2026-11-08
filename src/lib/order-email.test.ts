@@ -35,8 +35,8 @@ describe("buildOrderConfirmationEmail", () => {
 
   it("builds the Arabic email right-to-left with translated names", () => {
     const email = buildOrderConfirmationEmail(order, Languages.ARABIC, "Asia/Riyadh");
-    expect(email.subject).toBe("تم تأكيد الدفع – طلب رقم 3f2a9c1b | مطعم الدار");
-    expect(email.text).toContain("رقم الطلب: 3f2a9c1b\n");
+    expect(email.subject).toBe("مطعم الدار – تم تأكيد الدفع لطلبك رقم ‎3f2a9c1b");
+    expect(email.text).toContain("رقم الطلب: ‎3f2a9c1b\n");
     expect(email.html).toContain('dir="rtl"');
     for (const s of ["شكراً لك! تم الدفع بنجاح", "برجر", "الحجم: كبير", "الإضافات: جبن، فلفل", "Salad", "الإجمالي المدفوع", "$36.00"]) {
       expect(email.html).toContain(s);

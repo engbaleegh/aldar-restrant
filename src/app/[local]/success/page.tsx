@@ -13,6 +13,8 @@ function SuccessPageContent() {
   const requested = useRef(false);
 
   const [status, setStatus] = useState<"loading" | "done" | "error">("loading");
+  const [emailSent, setEmailSent] = useState(false);
+  const [emailPreviewUrl, setEmailPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (!sessionId) {
@@ -32,6 +34,15 @@ function SuccessPageContent() {
           body: JSON.stringify({ sessionId }),
         });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json().catch(() => null);
+        setEmailSent(data?.email === "sent");
+        // Test mode (Ethereal): the email is not delivered, so link to it.
+        if (
+          typeof data?.emailPreviewUrl === "string" &&
+          data.emailPreviewUrl.startsWith("https://ethereal.email/")
+        ) {
+          setEmailPreviewUrl(data.emailPreviewUrl);
+        }
 
         dispatch(clearCart());
         setStatus("done");
@@ -55,6 +66,21 @@ function SuccessPageContent() {
             Payment Successful 🎉
           </h1>
           <p className="mt-2">Your order has been created successfully.</p>
+          {emailSent && (
+            <p className="mt-1 text-sm text-muted-foreground">
+              A confirmation email with your order details has been sent.
+            </p>
+          )}
+          {emailPreviewUrl && (
+            <a
+              href={emailPreviewUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 text-primary underline"
+            >
+              View the confirmation email (test inbox)
+            </a>
+          )}
           <Link href="/" className="mt-4 underline">
             Back to Home
           </Link>

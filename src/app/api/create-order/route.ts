@@ -69,9 +69,14 @@ export async function POST(req: Request) {
       : Languages.ENGLISH;
     const email = customerEmail
       ? await sendOrderConfirmationEmail(order.id, customerEmail, locale)
-      : "skipped";
+      : { status: "skipped" as const };
 
-    return NextResponse.json({ orderId: order.id, email });
+    return NextResponse.json({
+      orderId: order.id,
+      email: email.status,
+      // Test mode only (Ethereal): lets the success page link to the sent email.
+      emailPreviewUrl: email.previewUrl,
+    });
   } catch (error) {
     console.error("[api/create-order] failed to confirm order", error);
     return NextResponse.json(

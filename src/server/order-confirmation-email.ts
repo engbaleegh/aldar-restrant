@@ -7,14 +7,20 @@ import { db } from "@/lib/prisma";
  * Emails the customer that the payment succeeded, with the order details.
  * Never throws: a failed email must not fail the order confirmation.
  */
+export type OrderEmailResult = {
+  status: "sent" | "skipped" | "failed";
+  /** Only in test mode (Ethereal): where the sent email can be viewed. */
+  previewUrl?: string;
+};
+
 export async function sendOrderConfirmationEmail(
   orderId: string,
   to: string,
   locale: Languages
-): Promise<"sent" | "skipped" | "failed"> {
+): Promise<OrderEmailResult> {
   if (!isEmailConfigured()) {
     console.warn("[email] SMTP is not configured; order confirmation email skipped", { orderId });
-    return "skipped";
+    return { status: "skipped" };
   }
 
   try {
@@ -44,11 +50,11 @@ export async function sendOrderConfirmationEmail(
       locale
     );
 
-    await sendEmail({ to, ...message });
-    console.info("[email] order confirmation sent", { orderId });
-    return "sent";
+    const { previewUrl } = await sendEmail({ to, ...message });
+    console.info("[email] order confirmation sent", { orderId, previewUrl });
+    return { status: "sent", previewUrl };
   } catch (error) {
     console.error("[email] failed to send order confirmation", { orderId, error });
-    return "failed";
+    return { status: "failed" };
   }
 }

@@ -25,6 +25,7 @@ export type OrderEmailData = {
 };
 
 const BRAND_COLOR = "#ec370a";
+const LRM = "‎"; // left-to-right mark (invisible)
 
 const STRINGS = {
   [Languages.ENGLISH]: {
@@ -51,9 +52,11 @@ const STRINGS = {
   [Languages.ARABIC]: {
     dir: "rtl",
     restaurant: "مطعم الدار",
-    // No "#" in Arabic: a leading "#" next to Latin characters is displayed on
-    // the wrong side in right-to-left text.
-    subject: (n: string) => `تم تأكيد الدفع – طلب رقم ${n} | مطعم الدار`,
+    // The Latin order reference goes last and has no "#": between Arabic words
+    // it gets reordered by mail clients that show subjects left-to-right. The
+    // invisible LRM keeps a reference starting with a digit (e.g. "7b1e4c2a")
+    // in one piece.
+    subject: (n: string) => `مطعم الدار – تم تأكيد الدفع لطلبك رقم ${LRM}${n}`,
     heading: "شكراً لك! تم الدفع بنجاح",
     intro: "استلمنا طلبك ودفعتك بنجاح. هذه تفاصيل طلبك:",
     orderNumber: "رقم الطلب",
@@ -116,7 +119,7 @@ export function buildOrderConfirmationEmail(
   const optionNames = isAr ? ARABIC_OPTION_NAMES : ENGLISH_OPTION_NAMES;
   const optionName = (name: string) => optionNames[name.trim()] ?? name.trim();
   const ref = orderReference(order.id);
-  const refLabel = isAr ? ref : `#${ref}`;
+  const refLabel = isAr ? `${LRM}${ref}` : `#${ref}`;
   const align = isAr ? "right" : "left";
   // Keep numbers, prices and phone numbers left-to-right inside Arabic text.
   const ltr = (value: string) =>
